@@ -30,23 +30,24 @@
 
 #include <unistd.h>
 
-int	main(int ac, char **av)
+void rotone(int ac, char **av)
 {
-	int	i;
-
-	i = 0;
-	if (ac == 2)
+	if(ac == 2)
 	{
-		while (av[1][i])
+		int i = 0;
+		char temp;
+		char *str = av[1];
+		while(str[i] != '\0')
 		{
-			if ((av[1][i] >= 'a' && av[1][i] <= 'y') || (av[1][i] >= 'A'
-					&& av[1][i] <= 'Y'))
-				av[1][i] = av[1][i] + 1;
-			else if ((av[1][i] == 'z' || av[1][i] == 'Z'))
-				av[1][i] = av[1][i] - 25;
-			write(1, &av[1][i], 1);
+			if (str[i] == 'z')
+				write(1, "a", 1);
+			else if (str[i] == 'Z')
+					write(1, "A", 1);
+			temp = str[i] + 'b' - 'a';
+			write(1, &temp, 1);
 			i++;
 		}
+		
 	}
 	write(1, "\n", 1);
 }
