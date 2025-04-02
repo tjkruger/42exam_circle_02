@@ -28,26 +28,27 @@
 
 #include <unistd.h>
 
-int	main(int ac, char **av)
+void	last_word(char *str)
 {
 	int	i;
+	int	start;
 
 	i = 0;
-	if (ac == 2)
-	{
-		while (av[1][i])
-			i++;
-		i--;
-		while (i >= 0 && (av[1][i] == 9 || av[1][i] == 32))
-			i--;
-		while (i >= 0 && !(av[1][i] == 9 || av[1][i] == 32))
-			i--;
+	while (str[i])
 		i++;
-		while (av[1][i] && !(av[1][i] == 9 || av[1][i] == 32))
-		{
-			write(1, &av[1][i], 1);
-			i++;
-		}
-	}
+	while (i > 0 && (str[i - 1] == ' ' || str[i - 1] == '\t'))
+		i--;
+	start = i;
+	while (start > 0 && str[start - 1] != ' ' && str[start - 1] != '\t')
+		start--;
+	while (start < i)
+		write(1, &str[start++], 1);
+}
+
+int	main(int ac, char **av)
+{
+	if (ac == 2)
+		last_word(av[1]);
 	write(1, "\n", 1);
+	return (0);
 }
