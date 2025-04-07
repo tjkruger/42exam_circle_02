@@ -1,4 +1,4 @@
-#include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 int is_prime(int n)
@@ -16,51 +16,35 @@ int is_prime(int n)
 }
 
 
-int	next_prime(int i)
+int	next_prime(int last_prime)
 {
-	i++;
-	while(!is_prime(i))
-		i++;
-	return(i);
-}
-
-int my_atoi(char *str)
-{
-	int n = 0;
-	int i = 0;
-
-	while (str[i] >= '0' && str[i] <= '9')
-    {
-        n = n * 10 + (str[i] - '0');
-        i++;
-    }
-	return(n);
-}
-
-void putnbr(int n)
-{
-	char temp;
-	while(n)
+	last_prime++;
+	while(!(is_prime(last_prime)))
 	{
-		temp = (n % 10) + '0';
-		write(1, &temp, 1);
-		n /= 10;
+		last_prime++;
 	}
+	return(last_prime);
+	
 }
+
 
 int	main(int ac, char **av)
 {
-	int nbr = my_atoi(av[1]);
-	int prime = 1;
-	int i = 0;
-	putnbr(nbr);
-	write(1, "\n", 1);
-	while(i < 10)
+	int n = atoi(av[1]);
+	int current_prime = 2;
+	while(n > 1)
 	{
-		prime = next_prime(prime);
-		putnbr(prime);
-		i++;
-		write(1, "\n", 1);
+		if(n % current_prime == 0)
+		{
+			n /= current_prime;
+			printf("%d", current_prime);
+			if(n > 1)
+				printf("*");
+		}
+		else
+			current_prime = next_prime(current_prime);
 	}
+	printf("\n");
+	
 
 }

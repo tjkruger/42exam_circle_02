@@ -10,7 +10,6 @@
 
 void ft_list_remove_if(t_list **begin_list, void *data_ref, int (*cmp)())
 {
-<<<<<<< HEAD
     t_list *node;
     t_list *prev;
     node = *begin_list;
@@ -31,20 +30,4 @@ void ft_list_remove_if(t_list **begin_list, void *data_ref, int (*cmp)())
         node = node->next;
     }
 
-=======
-	t_list *temp;
-	t_list **node = begin_list;
-
-	while(*node)
-	{
-		if((*cmp)((*node)->data, data_ref) == 0)
-		{
-			temp = (*node)->next;
-			(*node)->next = (*node)->next->next;
-			free(temp);
-		}
-		else
-			node = (*node)->next;
-	}
->>>>>>> origin/main
 }
