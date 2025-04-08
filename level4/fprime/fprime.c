@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 int is_prime(int n)
 {
 	int i = 2;
-	if (n <= 1) 
-		return 0;
 	while(i <= n / 2)
 	{
 		if(n % i == 0)
@@ -15,36 +14,64 @@ int is_prime(int n)
 	return(1);
 }
 
-
-int	next_prime(int last_prime)
+int next_prime(int old)
 {
-	last_prime++;
-	while(!(is_prime(last_prime)))
-	{
-		last_prime++;
-	}
-	return(last_prime);
-	
+	int new = old + 1;
+	while(!is_prime(new))
+		new++;
+	return(new);
 }
 
 
-int	main(int ac, char **av)
+
+int main(int ac, char **av)
 {
-	int n = atoi(av[1]);
-	int current_prime = 2;
-	while(n > 1)
+	if(ac == 2)
 	{
-		if(n % current_prime == 0)
+		int num = atoi(av[1]);
+		int prime = 2;
+		int schalter;
+		if(num == 1)
+			printf("1");
+		while(num >= prime)
 		{
-			n /= current_prime;
-			printf("%d", current_prime);
-			if(n > 1)
+			schalter = 0;
+			if(num % prime == 0)
+			{
+				num /= prime;
+				printf("%d",prime);
+				schalter = 1;
+			}
+			else
+				prime = next_prime(prime);
+			if(num > prime && schalter)
 				printf("*");
 		}
-		else
-			current_prime = next_prime(current_prime);
 	}
 	printf("\n");
-	
-
 }
+
+
+
+
+
+/*
+nummer 
+nummer = nummer / prime 
+print prime
+solange nummer > prime 
+	print *
+wiederholen 
+
+
+while()
+{
+	if(num % prime == 0)
+		num /= prime;
+		printf("%d",prime);
+	else
+		prime = next_prime;
+	if(nummer > prime)
+		printf("*");
+}
+*/
