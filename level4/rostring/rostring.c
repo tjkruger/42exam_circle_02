@@ -1,56 +1,76 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+int is_space(char c)
+{
+	if(c <= 32)
+		return(1);
+	return(0);
+}
+
+
+char	*firstword(char *str)
+{
+	int i = 0;
+	char *fword = NULL;
+	int start;
+	while(is_space(str[i]) && str[i])
+		i++;
+	start = i;
+	while(!is_space(str[i]) && str[i])
+		i++;
+	fword = malloc(sizeof(char) * (i - start + 1));
+	fword[i - start] = '\0';
+	i = 0;
+	while(!is_space(str[start + i]) && str[start + i])
+	{
+		fword[i] = str[start + i];
+		i++;
+	}
+	return(fword);
+}
+
+
+
 int	main(int ac, char **av)
 {
 	if (ac > 1)
 	{
-		int i = 0;
-		int j = 0;
-		int k = 0;
-		int len;
 		char *str = av[1];
-		char *firstword = NULL;
-		while(str[i] == ' ' || str[i] == '\t')
+		char *fword = firstword(str);
+		int i = 0;
+		int printed = 0;
+		while(is_space(str[i]) && str[i])
 			i++;
-		j = i;    			// j is now start of first word;
-		while(str[i] != ' ' && str[i] !=  '\0')
+		while(!is_space(str[i]) && str[i])
 			i++;
-		len = i - j;
-		firstword = malloc(sizeof(char) * len);
-		firstword[len] = '\0';
-		while(k < len)
+		while(is_space(str[i]) && str[i])
+			i++;
+		while(str[i])
 		{
-			firstword[k] = str[j];
-			j++;				
-			k++;
-		}
-		while(str[i] == ' ' || str[i] == '\t')
-			i++;
-		while(str[i] != '\0')
-		{
-			if(str[i] == ' ' || str[i] == '\t')
-			{
-				while(str[i] == ' ' || str[i] == '\t')
-					i++;
-				if(str[i] != '\0')
-					write(1, " ", 1);
-			}
-			else
-			{	
+			if(!is_space(str[i]))
 				write(1, &str[i], 1);
-				i++;
+			else
+			{
+				while(is_space(str[i]))
+					i++;
+				i--;
+				write(1, " ", 1);
+				
 			}
+			i++;
+			printed = 1;
 		}
-		write(1, " ", 1);
-		j = 0;
-		while(firstword[j] != '\0')
+		if(printed)
+			write(1, " ", 1);
+		int j = 0;
+		while(fword[j])
 		{
-			write(1, &firstword[j], 1);
+			write(1, &fword[j], 1);
 			j++;
 		}
-
-		free(firstword);
+		
+		free(fword);
 	}
 	write(1, "\n", 1);
 }

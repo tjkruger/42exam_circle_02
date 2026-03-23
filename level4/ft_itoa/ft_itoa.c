@@ -1,127 +1,62 @@
+
 #include <stdlib.h>
 
-<<<<<<< HEAD
-char *ft_itoa(int nbr)
+char *ft_itoa(int num)
 {
     int i = 0;
-    int j = nbr;
-    char temp;
-    char *str = NULL;
+    int test = num;
     int sign = 0;
-    int len;
+    int len = 0;
+    char *res = NULL;
 
-
-    while(j)
+    if(test < 0)
     {
-        len++;
-        j /= 10;
-    }
-    j = 0;
-    if (nbr < 0)
-    {
+        len = 1;
         sign = 1;
+        num *= -1;
+    }
+    while(test)
+    {
+        test /= 10;
         len++;
-        nbr = nbr * -1;
     }
+    res = malloc(sizeof(char) * (len + 1));
+    res[len + 1] = '\0';
     
-    str = malloc(sizeof(char) * len + 1);
-    if (nbr == 0)
+
+    if(num == 0)
     {
-        str[0] = '0';
-        str[1] = '\0';
-        return str;
-    }
-    while(nbr)
-    {
-        str[i] = (nbr % 10) + '0';
-        nbr /= 10;
-        i++;
+        res[0] = '0';
+        return(res);
     }
     if(sign)
+        res[0] = '-';
+    while(num)
     {
-        str[i] = '-';
-        i++;
+        res[--len] = (num % 10) + '0';
+        num /= 10;
     }
-    str[i] = '\0';
-    i--;
-    while(j <= i)
-    {
-        temp = str[j];
-        str[j] = str[i];
-        str[i] = temp;
-        j++;
-        i--;
-    }
-    return(str);
-
+    
+    return(res);
 }
 
 
-
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-char *ft_itoa(int nbr);
+
 
 int main(void)
 {
-    int numbers[] = {0, 1, -1, 42, -42, 123456, -987654, 2147483647, -2147483648};
-    int size = sizeof(numbers) / sizeof(numbers[0]);
-
-    for (int i = 0; i < size; i++)
+    int tests[] = {0, 42, -42, 123456, -987654, 2147483647, -2147483648};
+    int i = 0;
+    while (i < sizeof(tests) / sizeof(tests[0]))
     {
-        char *str = ft_itoa(numbers[i]);
-        if (str)
-        {
-            printf("Number: %d -> String: %s\n", numbers[i], str);
-            free(str); 
-        }
-        else
-        {
-            printf("Error converting number: %d\n", numbers[i]);
-        }
+        char *res = ft_itoa(tests[i]);
+        printf("ft_itoa(%d) = \"%s\"\n", tests[i], res);
+        free(res);
+        i++;
     }
     return 0;
 }
-
-=======
-
-char	*ft_itoa(int nbr)
-{
-	int len = 0;
-	int temp = nbr;
-	char *s = NULL;
-	while(temp > 0)
-	{
-		len++;
-		temp /= 10;
-	}
-	if (nbr == -2147483648)
-	{
-		s = malloc(sizeof(char) * 12);
-		s = "-2147483648\0";
-		return(s);
-	}
-	if (nbr < 0)
-		len++;
-
-	s = malloc(sizeof(char) *(len + 1));
-	s[len] = '\0';
-	if (nbr == 0)
-		s[0] = '0';
-	while(nbr)
-	{
-		s[--len] = (nbr % 10) + '0';
-		nbr /= 10;
-	}
-	return(s);
-
-}
-
-#include <stdio.h>
-
-int main()
-{
-	int nbr = 0;
-	printf("%s\n",ft_itoa(nbr));
-}
->>>>>>> origin/main
