@@ -70,7 +70,49 @@ int find_deepest_lvl(char *str)
 char *make_str_to_calc(int d,char *map, char *old)
 {
     char *new;
+    int i = 0;
+    int j = 0;
+    int len = 0;
+    while(d != map[i])//iterate until i get to the level i need
+        i++;
+    while(d + '0' == map[i + len])
+        len++;
+    new = malloc(sizeof(char) * (len + 1));
+
+    while(my_atoi(d + '0' == map[i + j]))//iterate as long as we are in the same level
+    {
+        new[j] = old[i + j];
+        j++;
+    }
+    new[j] = '\0';
     return(new);
+}
+
+char *resize_str(char *str, int index, int res)
+{
+    char *new;
+
+    return(new);
+}
+
+int calculate(char *str)
+{
+    int res = 0;
+    int tmp;
+    int i = 0;
+    if(str[0] == '(')
+        i++;
+    while(str[i] != '\0' || str[i] != ')')
+    {
+        if(str[i] != '*' || str[i] != '+')
+            tmp = my_atoi(str[i]);// i just boldly assume that i have done the error checking correctly and there is always a number after the first bracket
+        if(str[i] == '*')
+        {
+
+        }
+
+    }
+    return(res);
 }
 
 char *make_new_original(char *old)
@@ -79,11 +121,16 @@ char *make_new_original(char *old)
     char *new;
     char *map;
     int deepest;
+    int calculated;
 
     map = make_map(old);
     deepest = find_deepest_lvl(map);
     to_calc = make_str_to_calc(deepest, map, old);
+    calculated = calculate(to_calc);
 
+
+
+    free(to_calc);
     free(map);
     free(old);
     return(new);
