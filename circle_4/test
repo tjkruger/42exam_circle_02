@@ -1,0 +1,83 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+static char	*s;
+
+static long	parse_expr(void);
+
+static void	error_char(char c)
+{
+	if (c == '\0')
+		printf("Unexpected end of input\n");
+	else
+		printf("Unexpected token '%c'\n", c);
+	exit(1);
+}
+
+static long	parse_factor(void)
+{
+	long	val;
+
+	if (*s == '(')
+	{
+		s++;
+		val = parse_expr();
+		if (*s != ')')
+			error_char(*s);
+		s++;
+		return (val);
+	}
+	if (*s >= '0' && *s <= '9')
+		return (*s++ - '0');
+	error_char(*s);
+	return (0);
+}
+
+static long	parse_term(void)
+{
+	long	val;
+
+	val = parse_factor();
+	while (*s == '*')
+	{
+		s++;
+		if (*s == '\0')
+			error_char('\0');
+		val *= parse_factor();
+	}
+	return (val);
+}
+
+static long	parse_expr(void)
+{
+	long	val;
+
+	val = parse_term();
+	while (*s == '+')
+	{
+		s++;
+		if (*s == '\0')
+			error_char('\0');
+		val += parse_term();
+	}
+	return (val);
+}
+
+int	main(int argc, char **argv)
+{
+	long	result;
+
+	if (argc != 2)
+		return (1);
+	s = argv[1];
+	if (*s == '\0')
+	{
+		error_char('\0');
+		return (1);
+	}
+	result = parse_expr();
+	if (*s != '\0')
+		error_char(*s);
+	printf("%ld\n", result);
+	return (0);
+}
