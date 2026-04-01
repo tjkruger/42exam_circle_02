@@ -69,15 +69,34 @@ int main(int ac, char **av)
 	int res;
 	s = av[1];
 	if(ac != 2)
-		return(1);
+		return(0);
 	if(!s)
 	{
-		throw_error(*s);
-		return(1);
+		throw_error('\0');
+		return(0);
 	}
 	res = parse_expression();
 	if(*s != '\0')
 		throw_error(*s);
-	printf("%i\n", res);
-	return(0);
+
+	printf("%d\n", res);
+	return(1);
 }
+
+
+
+
+	// int res;
+	// s = av[1];
+	// if(ac != 2)
+	// 	return(1);
+	// if(!s)
+	// {
+	// 	throw_error(*s);
+	// 	return(1);
+	// }
+	// res = parse_expression();
+	// if(*s != '\0')
+	// 	throw_error(*s);
+	// printf("%i\n", res);
+	// return(0);
