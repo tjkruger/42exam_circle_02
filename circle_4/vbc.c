@@ -32,7 +32,7 @@ int parse_factor(void)
 	return(0);
 }
 
-int parse_term(void)
+int parse_term()
 {
 	int val;
 
@@ -48,7 +48,25 @@ int parse_term(void)
 }
 
 
-int	parse_expression(void)
+
+// int parse_term(void)
+// {
+// 	int val;
+
+// 	val = parse_factor();
+// 	while(*s == '*')
+// 	{
+// 		s++;
+// 		if(*s == '\0')
+// 			throw_error('\0');
+// 		val *= parse_factor();
+// 	}
+// 	return(val);
+// }
+
+
+
+int parse_expression()
 {
 	int val;
 
@@ -57,19 +75,35 @@ int	parse_expression(void)
 	{
 		s++;
 		if(*s == '\0')
+		{
 			throw_error('\0');
-		val += parse_term();
+			val += parse_term();
+		}
 	}
+
 	return(val);
 }
+
+// int	parse_expression(void)
+// {
+// 	int val;
+
+// 	val = parse_term();
+// 	while(*s == '+')
+// 	{
+// 		s++;
+// 		if(*s == '\0')
+// 			throw_error('\0');
+// 		val += parse_term();
+// 	}
+// 	return(val);
+// }
 
 
 int main(int ac, char **av)
 {
 	int res;
 	s = av[1];
-	if(ac != 2)
-		return(0);
 	if(!s)
 	{
 		throw_error('\0');
@@ -77,8 +111,7 @@ int main(int ac, char **av)
 	}
 	res = parse_expression();
 	if(*s != '\0')
-		throw_error(*s);
-
+		return(0);
 	printf("%d\n", res);
 	return(1);
 }
