@@ -29,7 +29,7 @@ int parse_factor(void)
 	if(*s >= '0' && *s <= '9')
 		return(*s++ - '0');
 	throw_error(*s);
-	return(0);
+	return(0);	
 }
 
 int parse_term()
@@ -47,58 +47,20 @@ int parse_term()
 	return(val);
 }
 
-
-
-// int parse_term(void)
-// {
-// 	int val;
-
-// 	val = parse_factor();
-// 	while(*s == '*')
-// 	{
-// 		s++;
-// 		if(*s == '\0')
-// 			throw_error('\0');
-// 		val *= parse_factor();
-// 	}
-// 	return(val);
-// }
-
-
-
-int parse_expression()
+int parse_expression(void)
 {
-	int val;
+    int val;
 
-	val = parse_term();
-	while(*s == '+')
-	{
-		s++;
-		if(*s == '\0')
-		{
-			throw_error('\0');
-			val += parse_term();
-		}
-	}
-
-	return(val);
+    val = parse_term();
+    while(*s == '+')
+    {
+        s++;
+        if(*s == '\0')
+            throw_error('\0');
+        val += parse_term();
+    }
+    return(val);
 }
-
-// int	parse_expression(void)
-// {
-// 	int val;
-
-// 	val = parse_term();
-// 	while(*s == '+')
-// 	{
-// 		s++;
-// 		if(*s == '\0')
-// 			throw_error('\0');
-// 		val += parse_term();
-// 	}
-// 	return(val);
-// }
-
 
 int main(int ac, char **av)
 {
@@ -115,21 +77,3 @@ int main(int ac, char **av)
 	printf("%d\n", res);
 	return(1);
 }
-
-
-
-
-	// int res;
-	// s = av[1];
-	// if(ac != 2)
-	// 	return(1);
-	// if(!s)
-	// {
-	// 	throw_error(*s);
-	// 	return(1);
-	// }
-	// res = parse_expression();
-	// if(*s != '\0')
-	// 	throw_error(*s);
-	// printf("%i\n", res);
-	// return(0);
