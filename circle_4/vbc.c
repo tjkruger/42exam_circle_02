@@ -62,6 +62,19 @@ int parse_expression(void)
     return(val);
 }
 
+void check_for_brackets(char *s)
+{
+	int flag = 0;
+	int i = 0;
+
+	if(flag == 0 && s[i] == ')')
+		throw_error(s[i]);
+	if(s[i] == ')')
+		flag--;
+	if(s[i] == '(')
+		flag++;
+}
+
 int main(int ac, char **av)
 {
 	int res;
@@ -71,6 +84,7 @@ int main(int ac, char **av)
 		throw_error('\0');
 		return(0);
 	}
+	check_for_brackets(s);
 	res = parse_expression();
 	if(*s != '\0')
 		return(0);
