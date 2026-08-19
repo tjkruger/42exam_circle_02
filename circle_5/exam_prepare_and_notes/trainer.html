@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Code Trainer</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+/* ─── HEADER ─── */
+header {
+  background: #252526;
+  border-bottom: 2px solid #007acc;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  height: 42px;
+}
+
+.app-title { color: #cccccc; font-weight: bold; font-size: 13px; }
+
+#timer {
+  font-size: 22px;
+  font-weight: bold;
+  color: #858585;
+  font-variant-numeric: tabular-nums;
+  min-width: 90px;
+  letter-spacing: 1px;
+  transition: color 0.2s;
+}
+#timer.running { color: #4ec9b0; }
+#timer.done    { color: #d7ba7d; }
+
+#progress {
+  font-size: 12px;
+  color: #858585;
+  min-width: 90px;
+}
+
+.progress-bar-outer {
+  flex: 1;
+  height: 5px;
+  background: #3c3c3c;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-bar-inner {
+  height: 100%;
+  width: 0%;
+  background: #4ec9b0;
+  border-radius: 3px;
+  transition: width 0.1s, background 0.3s;
+}
+.progress-bar-inner.complete { background: #d7ba7d; }
+
+.mode-toggle {
+  display: flex;
+  border: 1px solid #3c3c3c;
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.mode-btn {
+  padding: 3px 11px;
+  background: #2d2d2d;
+  color: #858585;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  transition: background 0.1s, color 0.1s;
+}
+.mode-btn + .mode-btn { border-left: 1px solid #3c3c3c; }
+.mode-btn.active { background: #094771; color: #cccccc; }
+
+.btn {
+  padding: 3px 11px;
+  border: 1px solid #3c3c3c;
+  background: #2d2d2d;
+  color: #cccccc;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+.btn:hover { background: #3c3c3c; }
+.btn.primary { background: #0e639c; border-color: #0e639c; color: #fff; }
+.btn.primary:hover { background: #1177bb; }
+.btn.unlock  { background: #3a3a00; border-color: #888800; color: #d7ba7d; }
+.btn.unlock:hover { background: #4a4a00; }
+.btn.danger  { background: #3a0000; border-color: #880000; color: #f48771; }
+.btn.danger:hover { background: #4a0000; }
+
+/* ─── TOOLBAR ─── */
+.toolbar {
+  background: #1e1e1e;
+  border-bottom: 1px solid #2d2d2d;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 30px;
+}
+
+.toolbar-label { font-size: 11px; color: #5a5a5a; }
+.toolbar-sep { width: 1px; height: 16px; background: #3c3c3c; margin: 0 4px; }
+
+.toolbar select {
+  background: #2d2d2d;
+  color: #cccccc;
+  border: 1px solid #3c3c3c;
+  border-radius: 3px;
+  padding: 2px 20px 2px 6px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23858585'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 5px center;
+  max-width: 160px;
+}
+.toolbar select:hover { border-color: #555; }
+
+.toolbar-spacer { flex: 1; }
+
+#block-info {
+  font-size: 11px;
+  color: #569cd6;
+  font-style: italic;
+}
+
+/* ─── MAIN ─── */
+main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ─── PANELS ─── */
+.panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+.panel-header {
+  background: #2d2d2d;
+  padding: 0 10px;
+  font-size: 11px;
+  color: #858585;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #3c3c3c;
+  flex-shrink: 0;
+  height: 26px;
+}
+.panel-title { flex: 1; }
+
+/* ─── EDITOR ─── */
+.editor-wrapper {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.line-numbers {
+  width: 52px;
+  background: #1e1e1e;
+  color: #5a5a5a;
+  font-size: 12px;
+  line-height: 20px;
+  padding: 8px 6px 8px 4px;
+  text-align: right;
+  user-select: none;
+  overflow: hidden;
+  flex-shrink: 0;
+  border-right: 1px solid #2d2d2d;
+}
+
+.ln-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 20px;
+  gap: 4px;
+}
+
+.ln-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.08s;
+}
+.ln-dot.correct { background: #4ec9b0; }
+.ln-dot.wrong   { background: #f44747; }
+.ln-dot.empty   { background: #2a2a2a; }
+.ln-dot.extra   { background: #ce9178; }
+
+textarea {
+  flex: 1;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  padding: 8px 10px;
+  resize: none;
+  tab-size: 4;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  overflow-y: auto;
+  caret-color: #d4d4d4;
+}
+textarea::placeholder { color: #3c3c3c; }
+
+/* ─── DIVIDER ─── */
+.divider {
+  width: 4px;
+  background: #3c3c3c;
+  cursor: col-resize;
+  flex-shrink: 0;
+  transition: background 0.1s;
+}
+.divider:hover, .divider.dragging { background: #007acc; }
+
+/* ─── LOCK / PEEK ─── */
+.ref-locked .editor-wrapper > textarea,
+.ref-locked .editor-wrapper > .line-numbers {
+  filter: blur(3px);
+  pointer-events: none;
+  user-select: none;
+}
+.ref-locked.ref-peeking .editor-wrapper > textarea,
+.ref-locked.ref-peeking .editor-wrapper > .line-numbers {
+  filter: none;
+}
+
+.peek-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+.ref-locked .peek-overlay { display: flex; }
+.ref-locked.ref-peeking .peek-overlay { background: transparent; }
+
+.peek-hint {
+  background: #252526cc;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: #858585;
+  pointer-events: none;
+}
+.ref-locked.ref-peeking .peek-hint { display: none; }
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width: 195px;
+  background: #252526;
+  border-left: 1px solid #3c3c3c;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+.sidebar-section + .sidebar-section { border-top: 1px solid #3c3c3c; }
+
+.sidebar-header {
+  padding: 0 10px;
+  font-size: 11px;
+  color: #858585;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #3c3c3c;
+  flex-shrink: 0;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.split-item {
+  padding: 3px 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  border-bottom: 1px solid #262626;
+}
+.split-line  { color: #569cd6; font-size: 11px; min-width: 28px; }
+.split-time  { color: #4ec9b0; font-variant-numeric: tabular-nums; font-size: 12px; }
+.split-delta { color: #5a5a5a; font-size: 11px; }
+.split-name  { color: #858585; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+
+.history-item {
+  padding: 5px 10px;
+  border-bottom: 1px solid #2a2a2a;
+  cursor: default;
+}
+.history-item:hover { background: #2d2d2d; }
+.h-time   { color: #4ec9b0; font-weight: bold; font-variant-numeric: tabular-nums; }
+.h-meta   { color: #5a5a5a; font-size: 11px; margin-top: 1px; }
+.h-snippet{ color: #858585; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.empty-hint {
+  padding: 10px;
+  color: #3c3c3c;
+  font-size: 11px;
+  font-style: italic;
+}
+
+/* ─── CHECK MODE ─── */
+body.check-mode #timer         { display: none; }
+body.check-mode #lock-btn      { display: none; }
+body.check-mode #reset-btn     { display: none; }
+body.check-mode #check-stats   { display: flex; }
+
+#check-stats {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+#check-correct { color: #4ec9b0; font-weight: bold; }
+#check-wrong   { color: #f44747; font-weight: bold; }
+#check-pct     { color: #d7ba7d; font-weight: bold; }
+
+/* ─── COMPLETION ─── */
+#completion-banner {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+#completion-banner.show { display: flex; }
+
+.completion-box {
+  background: #252526;
+  border: 1px solid #4ec9b0;
+  border-radius: 8px;
+  padding: 28px 36px;
+  text-align: center;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.6);
+  min-width: 280px;
+}
+.completion-box h2 { color: #4ec9b0; font-size: 18px; margin-bottom: 4px; }
+.completion-box .final-time {
+  font-size: 40px;
+  color: #d7ba7d;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  margin: 10px 0 4px;
+  letter-spacing: 2px;
+}
+.completion-box .snippet-label {
+  color: #569cd6;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.completion-box .meta { color: #858585; font-size: 12px; margin-bottom: 16px; }
+.completion-actions { display: flex; gap: 8px; justify-content: center; }
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #3c3c3c; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <span class="app-title">Code Trainer</span>
+  <span id="timer">00:00.0</span>
+  <span id="progress">0 / 0 Zeilen</span>
+  <div class="progress-bar-outer">
+    <div class="progress-bar-inner" id="progress-bar"></div>
+  </div>
+
+  <!-- check mode stats (hidden in type mode) -->
+  <div id="check-stats">
+    <span>✓ <span id="check-correct">0</span></span>
+    <span>✗ <span id="check-wrong">0</span></span>
+    <span id="check-pct">0%</span>
+  </div>
+
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="mode-type-btn" onclick="setMode('type')">◷ Tippen</button>
+    <button class="mode-btn" id="mode-check-btn" onclick="setMode('check')">✓ Prüfen</button>
+  </div>
+
+  <button class="btn primary" id="lock-btn" onclick="toggleLock()">Lock &amp; Start</button>
+  <button class="btn" id="reset-btn" onclick="resetPractice()">Reset</button>
+  <button class="btn danger" onclick="clearAll()">Neu</button>
+</header>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <span class="toolbar-label">Snippet:</span>
+  <select id="group-sel" onchange="onGroupChange()"></select>
+  <select id="file-sel" onchange="onFileChange()"></select>
+  <select id="block-sel"></select>
+  <button class="btn" onclick="loadSnippet()" style="padding:2px 9px;">Laden →</button>
+  <span id="block-info"></span>
+  <div class="toolbar-spacer"></div>
+</div>
+
+<!-- MAIN -->
+<main>
+  <!-- REFERENCE -->
+  <div class="panel" id="ref-panel" style="flex:1;">
+    <div class="panel-header">
+      <span class="panel-title" id="ref-title">Referenz</span>
+      <span id="lock-icon"></span>
+    </div>
+    <div class="editor-wrapper">
+      <div class="line-numbers" id="ref-lnums"></div>
+      <textarea id="ref-ta" placeholder="Referenzcode einfügen oder Snippet oben laden…"
+        oninput="onRefChange()" onscroll="syncLnScroll('ref')"></textarea>
+      <div class="peek-overlay"
+        onmousedown="peekStart()" onmouseup="peekEnd()" onmouseleave="peekEnd()"
+        ontouchstart="peekStart()" ontouchend="peekEnd()">
+        <div class="peek-hint">Gedrückt halten zum Schauen</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider" id="divider"></div>
+
+  <!-- PRACTICE -->
+  <div class="panel" id="prac-panel" style="flex:1;">
+    <div class="panel-header">
+      <span class="panel-title" id="prac-title">Übung</span>
+    </div>
+    <div class="editor-wrapper">
+      <div class="line-numbers" id="prac-lnums"></div>
+      <textarea id="prac-ta" placeholder="Tippe hier… oder im Prüfen-Modus Code einfügen"
+        oninput="onPracChange()" onscroll="syncLnScroll('prac')"
+        onkeydown="handleKey(event)"></textarea>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section" style="max-height:55%;">
+      <div class="sidebar-header">
+        Splits
+        <button class="btn" style="font-size:10px;padding:1px 5px;margin-left:auto;" onclick="clearSplits()">✕</button>
+      </div>
+      <div class="sidebar-scroll" id="splits-list">
+        <div class="empty-hint">Noch keine Splits</div>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-header">
+        Verlauf
+        <button class="btn" style="font-size:10px;padding:1px 5px;margin-left:auto;" onclick="clearHistory()">✕</button>
+      </div>
+      <div class="sidebar-scroll" id="history-list"></div>
+    </div>
+  </div>
+</main>
+
+<!-- COMPLETION -->
+<div id="completion-banner">
+  <div class="completion-box">
+    <h2>Fertig!</h2>
+    <div class="final-time" id="final-time">00:00.0</div>
+    <div class="snippet-label" id="final-snippet"></div>
+    <div class="meta" id="final-meta"></div>
+    <div class="completion-actions">
+      <button class="btn primary" onclick="closeCompletion()">Weiter üben</button>
+      <button class="btn" onclick="resetPractice(); closeCompletion();">Nochmal</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── SNIPPETS ────────────────────────────────────────────────────────────────
+const SNIPPETS = {
+'BSQ': {
+'bsq.c': `#include "bsq.h"
+
+static void	free_map(t_map *map)
+{
+	int	i;
+
+	i = 0;
+	while (i < map->height)
+	{
+		free(map->grid[i]);
+		i++;
+	}
+	free(map->grid);
+	map->grid = NULL;
+}
+
+static int	load_elements(FILE *file, t_elements *el)
+{
+	char	*line;
+	size_t	cap;
+	int		ret;
+
+	line = NULL;
+	cap = 0;
+	ret = fscanf(file, "%d %c %c %c",
+			&el->n_lines, &el->empty, &el->obstacle, &el->full);
+	if (ret != 4 || el->n_lines <= 0)
+		return (-1);
+	if (el->empty == el->obstacle || el->empty == el->full
+		|| el->obstacle == el->full)
+		return (-1);
+	if (el->empty < 32 || el->obstacle < 32 || el->full < 32)
+		return (-1);
+	/* consume rest of header line */
+	if (getline(&line, &cap, file) == -1)
+	{
+		free(line);
+		return (-1);
+	}
+	free(line);
+	return (0);
+}
+
+static int	load_map(FILE *file, t_map *map, t_elements *el)
+{
+	char	*line;
+	size_t	cap;
+	ssize_t	n;
+	int		len;
+	int		i;
+	int		j;
+
+	map->height = el->n_lines;
+	map->width = -1;
+	map->grid = malloc((map->height + 1) * sizeof(char *));
+	if (!map->grid)
+		return (-1);
+	map->grid[map->height] = NULL;
+	i = 0;
+	while (i < map->height)
+	{
+		line = NULL;
+		cap = 0;
+		n = getline(&line, &cap, file);
+		if (n <= 0)
+		{
+			free(line);
+			map->height = i;
+			free_map(map);
+			return (-1);
+		}
+		len = (int)n;
+		if (len > 0 && line[len - 1] == '\\n')
+			line[--len] = '\\0';
+		if (len == 0)
+		{
+			free(line);
+			map->height = i;
+			free_map(map);
+			return (-1);
+		}
+		if (map->width < 0)
+			map->width = len;
+		else if (len != map->width)
+		{
+			free(line);
+			map->height = i;
+			free_map(map);
+			return (-1);
+		}
+		j = 0;
+		while (j < len)
+		{
+			if (line[j] != el->empty && line[j] != el->obstacle)
+			{
+				free(line);
+				map->height = i;
+				free_map(map);
+				return (-1);
+			}
+			j++;
+		}
+		map->grid[i] = line;
+		i++;
+	}
+	return (0);
+}
+
+static int	min3(int a, int b, int c)
+{
+	int	m;
+
+	m = a;
+	if (b < m)
+		m = b;
+	if (c < m)
+		m = c;
+	return (m);
+}
+
+static void	solve(t_map *map, t_elements *el)
+{
+	int		**dp;
+	t_square	sq;
+	int		i;
+	int		j;
+
+	dp = malloc(map->height * sizeof(int *));
+	if (!dp)
+		return ;
+	i = 0;
+	while (i < map->height)
+	{
+		dp[i] = calloc(map->width, sizeof(int));
+		i++;
+	}
+	sq.size = 0;
+	sq.row = 0;
+	sq.col = 0;
+	i = 0;
+	while (i < map->height)
+	{
+		j = 0;
+		while (j < map->width)
+		{
+			if (map->grid[i][j] == el->obstacle)
+				dp[i][j] = 0;
+			else if (i == 0 || j == 0)
+				dp[i][j] = 1;
+			else
+				dp[i][j] = min3(dp[i - 1][j], dp[i][j - 1],
+						dp[i - 1][j - 1]) + 1;
+			if (dp[i][j] > sq.size)
+			{
+				sq.size = dp[i][j];
+				sq.row = i - dp[i][j] + 1;
+				sq.col = j - dp[i][j] + 1;
+			}
+			j++;
+		}
+		i++;
+	}
+	i = sq.row;
+	while (i < sq.row + sq.size)
+	{
+		j = sq.col;
+		while (j < sq.col + sq.size)
+		{
+			map->grid[i][j] = el->full;
+			j++;
+		}
+		i++;
+	}
+	i = 0;
+	while (i < map->height)
+	{
+		free(dp[i]);
+		i++;
+	}
+	free(dp);
+}
+
+int	execute_bsq(FILE *file)
+{
+	t_elements	el;
+	t_map		map;
+	int			i;
+
+	if (load_elements(file, &el) == -1)
+		return (-1);
+	if (load_map(file, &map, &el) == -1)
+		return (-1);
+	solve(&map, &el);
+	i = 0;
+	while (i < map.height)
+	{
+		fprintf(stdout, "%s\\n", map.grid[i]);
+		i++;
+	}
+	free_map(&map);
+	return (0);
+}
+
+int	convert_file_pointer(char *name)
+{
+	FILE	*file;
+	int		ret;
+
+	file = fopen(name, "r");
+	if (!file)
+		return (-1);
+	ret = execute_bsq(file);
+	fclose(file);
+	return (ret);
+}
+
+int	main(int ac, char **av)
+{
+	if (ac == 1)
+		execute_bsq(stdin);
+	else if (ac == 2)
+	{
+		FILE	*f = fopen(av[1], "r");
+
+		if (!f)
+			return (1);
+		execute_bsq(f);
+		fclose(f);
+	}
+	else
+		return (1);
+	return (0);
+}`,
+
+'bsq.h': `#ifndef BSQ_H
+# define BSQ_H
+
+# define _POSIX_C_SOURCE 200809L
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
+
+typedef struct s_elements
+{
+	int		n_lines;
+	char	empty;
+	char	obstacle;
+	char	full;
+}	t_elements;
+
+typedef struct s_map
+{
+	char	**grid;
+	int		width;
+	int		height;
+}	t_map;
+
+typedef struct s_square
+{
+	int	size;
+	int	row;
+	int	col;
+}	t_square;
+
+int		execute_bsq(FILE *file);
+int		convert_file_pointer(char *name);
+
+#endif`,
+},
+
+'Life': {
+'life.c': `#include "life.h"
+
+
+int init_game_parse_argv_and_figure_out_runflow_while_inuse(t_life* life, char* argv[])
+{
+    life->width = atoi(argv[1]);
+    life->height = atoi(argv[2]);
+    life->iterations = atoi(argv[3]);
+    life->dead = ' ';
+    life->alive = '0';
+    life->i = 0;
+    life->j = 0;
+    life->on_the_board = 0;
+
+    life->grid = (char **)malloc(life->height * sizeof(char *));
+    if (!(life->grid))
+        return (-1);
+    for (int i = 0; i < life->height; i++)
+    {
+        life->grid[i] = (char *)malloc(life->width * sizeof(char));
+        if (!(life->grid[i]))
+        {
+            for (int j = 0; j < i; j++)
+                free(life->grid[j]);
+            free(life->grid);
+            return (-1);
+        }
+        for (int j = 0; j < life->width; j++)
+            life->grid[i][j] = life->dead;
+    }
+    return (0);
+}
+
+int fill_board_while_handling_input(t_life* life)
+{
+    char buffer;
+    int flag = 0;
+
+    while (read(STDIN_FILENO, &buffer, 1) == 1)
+    {
+        switch (buffer)
+        {
+        case 'w':
+            if (life->i > 0)
+                life->i--;
+            break;
+        case 's':
+            if (life->i < (life->height - 1))
+                life->i++;
+            break;
+        case 'a':
+            if (life->j > 0)
+                life->j--;
+            break;
+        case 'd':
+            if (life->j < (life->width - 1))
+                life->j++;
+            break;
+        case 'x':
+            life->on_the_board = !(life->on_the_board);
+            break;
+        default:
+            flag = 1;
+        }
+        if (flag)
+            continue;
+        if (life->on_the_board == 1)
+            life->grid[life->i][life->j] = life->alive;
+    }
+    return (0);
+}
+
+int count_neighbors(t_life* life, int row, int col)
+{
+    int count = 0;
+    for (int di = -1; di <= 1; di++)
+    {
+        for (int dj = -1; dj <= 1; dj++)
+        {
+            if (di == 0 && dj == 0)
+                continue;
+            int ni = row + di;
+            int nj = col + dj;
+            if (ni >= 0 && ni < life->height && nj >= 0 && nj < life->width)
+            {
+                if (life->grid[ni][nj] == life->alive)
+                    count++;
+            }
+        }
+    }
+    return count;
+}
+
+int play(t_life* life)
+{
+    char** temp = (char**)malloc((life->height) * sizeof(char *));
+    if(!temp)
+        return(-1);
+    for(int i = 0; i < life->height; i++)
+    {
+        temp[i] = (char *)malloc((life->width) * sizeof(char));
+        if(!(temp[i]))
+            return(-1);
+    }
+
+    for(int i = 0; i < life->height; i++)
+    {
+        for(int j = 0; j < life->width; j++)
+        {
+            int neighbors = count_neighbors(life, i, j);
+            if(life->grid[i][j] == life->alive) {
+                if(neighbors == 2 || neighbors == 3) {
+                    temp[i][j] = life->alive;
+                }
+                else
+                    temp[i][j] = life->dead;
+            }
+            else {
+                if(neighbors == 3) {
+                    temp[i][j] = life->alive;
+                }
+                else
+                    temp[i][j] = life->dead;
+            }
+        }
+    }
+
+    for(int i = 0; i < life->height; i++)
+        free(life->grid[i]);
+    free(life->grid);
+    life->grid = temp;
+    return(0);
+}
+
+void print_board(t_life* life)
+{
+	for(int i = 0; i < life->height; i++)
+	{
+		for(int j = 0; j < life->width; j++)
+		{
+			putchar(life->grid[i][j]);
+		}
+		putchar('\\n');
+	}
+}
+
+int main(int ac, char **av)
+{
+    if (ac != 4)
+        return (1);
+    t_life life;
+    if (init_game_parse_argv_and_figure_out_runflow_while_inuse(&life, av) == -1)
+        return (1);
+    if (fill_board_while_handling_input(&life) == -1)
+        return (1);
+    for (int i = 0; i < life.iterations; i++)
+    {
+        if (play(&life) == -1)
+        {
+            for (int j = 0; j < life.height; j++)
+                free(life.grid[j]);
+            free(life.grid);
+            return (-1);
+        }
+    }
+    print_board(&life);
+    for (int i = 0; i < life.height; i++)
+        free(life.grid[i]);
+    free(life.grid);
+    return (0);
+}`,
+
+'life.h': `#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <fcntl.h>
+
+typedef struct s_life
+{
+    int width;
+    int height;
+    int iterations;
+    int j;
+    int i;
+    char dead;
+    char alive;
+    int on_the_board;
+    char **grid;
+}               t_life;`,
+},
+
+'bigint': {
+'bigint.cpp': `#include "bigint.hpp"
+#include <sstream>
+#include <algorithm>
+
+bigint::bigint() : num("0") {}
+
+bigint::bigint(unsigned int n) {
+    std::stringstream ss;
+    ss << n;
+    num = ss.str();
+}
+
+bigint::bigint(const bigint& b) : num(b.num) {}
+
+bigint& bigint::operator=(const bigint& b) {
+    if (this != &b)
+        num = b.num;
+    return *this;
+}
+
+
+bigint bigint::operator+(const bigint& b) const {
+    std::string s1 = num;
+    std::string s2 = b.num;
+
+
+    std::reverse(s1.begin(), s1.end());
+    std::reverse(s2.begin(), s2.end());
+
+    std::string result;
+    int carry = 0;
+    size_t maxLen = std::max(s1.size(), s2.size());
+
+    for (size_t i = 0; i < maxLen || carry; i++) {
+        int d1 = i < s1.size() ? s1[i] - '0' : 0;
+        int d2 = i < s2.size() ? s2[i] - '0' : 0;
+        int sum = d1 + d2 + carry;
+        result += (sum % 10) + '0';
+        carry = sum / 10;
+    }
+
+    std::reverse(result.begin(), result.end());
+
+
+    size_t pos = result.find_first_not_of('0');
+    if (pos != std::string::npos)
+        result = result.substr(pos);
+    else
+        result = "0";
+
+    bigint r;
+    r.num = result;
+    return r;
+}
+
+bigint& bigint::operator+=(const bigint& b) {
+    *this = *this + b;
+    return *this;
+}
+
+bigint& bigint::operator++() {
+    *this += bigint(1);
+    return *this;
+}
+
+bigint bigint::operator++(int) {
+    bigint tmp(*this);
+    ++(*this);
+    return tmp;
+}
+
+
+bigint bigint::operator<<(const bigint& shift) const {
+    bigint result(*this);
+    std::stringstream ss(shift.num);
+    int n;
+    ss >> n;
+
+    if (result.num == "0")
+        return result;
+
+    for (int i = 0; i < n; i++)
+        result.num += '0';
+    return result;
+}
+
+bigint& bigint::operator<<=(const bigint& shift) {
+    *this = *this << shift;
+    return *this;
+}
+
+
+bigint bigint::operator>>(const bigint& shift) const {
+    bigint result(*this);
+    std::stringstream ss(shift.num);
+    int n;
+    ss >> n;
+
+    if (n >= (int)result.num.size()) {
+        result.num = "0";
+        return result;
+    }
+
+    result.num = result.num.substr(0, result.num.size() - n);
+
+    if (result.num.empty() || result.num.find_first_not_of('0') == std::string::npos)
+        result.num = "0";
+
+    return result;
+}
+
+bigint& bigint::operator>>=(const bigint& shift) {
+    *this = *this >> shift;
+    return *this;
+}
+
+
+bool bigint::operator==(const bigint& b) const {
+    return num == b.num;
+}
+
+bool bigint::operator!=(const bigint& b) const {
+    return !(*this == b);
+}
+
+bool bigint::operator<(const bigint& b) const {
+    if (num.size() != b.num.size())
+        return num.size() < b.num.size();
+    return num < b.num;
+}
+
+bool bigint::operator<=(const bigint& b) const {
+    return *this < b || *this == b;
+}
+
+bool bigint::operator>(const bigint& b) const {
+    return !(*this <= b);
+}
+
+bool bigint::operator>=(const bigint& b) const {
+    return !(*this < b);
+}
+
+std::ostream& operator<<(std::ostream& os, const bigint& b) {
+    return os << b.num;
+}`,
+
+'bigint.hpp': `#ifndef BIGINT_HPP
+#define BIGINT_HPP
+#include <string>
+#include <iostream>
+
+class bigint {
+private:
+    std::string num;
+public:
+    bigint();
+    bigint(unsigned int n);
+    bigint(const bigint& b);
+    bigint& operator=(const bigint& b);
+
+    bigint operator+(const bigint& b) const;
+    bigint& operator+=(const bigint& b);
+    bigint& operator++();
+    bigint operator++(int);
+
+    bigint operator<<(const bigint& shift) const;
+    bigint& operator<<=(const bigint& shift);
+    bigint operator>>(const bigint& shift) const;
+    bigint& operator>>=(const bigint& shift);
+
+    bool operator<(const bigint& b) const;
+    bool operator<=(const bigint& b) const;
+    bool operator>(const bigint& b) const;
+    bool operator>=(const bigint& b) const;
+    bool operator==(const bigint& b) const;
+    bool operator!=(const bigint& b) const;
+
+    friend std::ostream& operator<<(std::ostream& os, const bigint& b);
+};
+
+#endif`,
+},
+
+'vect2': {
+'vect2.hpp': `#ifndef VECT2_HPP
+#define VECT2_HPP
+#include <iostream>
+
+class vect2 {
+private:
+    int x, y;
+public:
+    // Orthodox Canonical Form
+    vect2() : x(0), y(0) {}
+    vect2(int a, int b) : x(a), y(b) {}
+    vect2(const vect2& v) : x(v.x), y(v.y) {}
+    vect2& operator=(const vect2& v) { x = v.x; y = v.y; return *this; }
+
+    // Array access
+    int& operator[](int i) { return i == 0 ? x : y; }
+    int operator[](int i) const { return i == 0 ? x : y; }
+
+    // Arithmetic operators
+    vect2 operator+(const vect2& v) const { return vect2(x + v.x, y + v.y); }
+    vect2 operator-(const vect2& v) const { return vect2(x - v.x, y - v.y); }
+    vect2 operator*(int n) const { return vect2(x * n, y * n); }
+    vect2 operator-() const { return vect2(-x, -y); }
+
+    // Compound assignment
+    vect2& operator+=(const vect2& v) { x += v.x; y += v.y; return *this; }
+    vect2& operator-=(const vect2& v) { x -= v.x; y -= v.y; return *this; }
+    vect2& operator*=(int n) { x *= n; y *= n; return *this; }
+
+    // Increment/Decrement
+    vect2& operator++() { x++; y++; return *this; }
+    vect2 operator++(int) { vect2 tmp(*this); x++; y++; return tmp; }
+    vect2& operator--() { x--; y--; return *this; }
+    vect2 operator--(int) { vect2 tmp(*this); x--; y--; return tmp; }
+
+    // Comparison
+    bool operator==(const vect2& v) const { return x == v.x && y == v.y; }
+    bool operator!=(const vect2& v) const { return !(*this == v); }
+};
+
+// Non-member operator for (int * vect2)
+vect2 operator*(int n, const vect2& v) { return v * n; }
+
+// Stream output
+std::ostream& operator<<(std::ostream& os, const vect2& v) {
+    return os << "{" << v[0] << ", " << v[1] << "}";
+}
+
+#endif`,
+},
+
+'polyset': {
+'searchable_array_bag.hpp': `#ifndef SEARCHABLE_ARRAY_BAG_HPP
+#define SEARCHABLE_ARRAY_BAG_HPP
+
+#include "array_bag.hpp"
+#include "searchable_bag.hpp"
+
+class searchable_array_bag : public array_bag, public searchable_bag {
+public:
+    searchable_array_bag() : array_bag() {}
+
+    searchable_array_bag(const searchable_array_bag& other) : array_bag(other) {}
+
+    searchable_array_bag& operator=(const searchable_array_bag& other) {
+        if (this != &other)
+            array_bag::operator=(other);
+        return *this;
+    }
+
+    virtual ~searchable_array_bag() {}
+
+    virtual bool has(int value) const {
+        for (int i = 0; i < size; i++) {
+            if (data[i] == value)
+                return true;
+        }
+        return false;
+    }
+};
+
+#endif`,
+
+'searchable_tree_bag.hpp': `#ifndef SEARCHABLE_TREE_BAG_HPP
+#define SEARCHABLE_TREE_BAG_HPP
+
+#include "tree_bag.hpp"
+#include "searchable_bag.hpp"
+
+class searchable_tree_bag : public tree_bag, public searchable_bag {
+public:
+    searchable_tree_bag() : tree_bag() {}
+
+    searchable_tree_bag(const searchable_tree_bag& other) : tree_bag(other) {}
+
+    searchable_tree_bag& operator=(const searchable_tree_bag& other) {
+        if (this != &other)
+            tree_bag::operator=(other);
+        return *this;
+    }
+
+    virtual ~searchable_tree_bag() {}
+
+    virtual bool has(int value) const {
+        return search_in_tree(tree, value);
+    }
+
+private:
+    static bool search_in_tree(node* n, int value) {
+        if (n == NULL)
+            return false;
+        if (n->value == value)
+            return true;
+        if (value < n->value)
+            return search_in_tree(n->l, value);
+        else
+            return search_in_tree(n->r, value);
+    }
+};
+
+#endif`,
+
+'set.hpp': `#ifndef SET_HPP
+#define SET_HPP
+
+#include "searchable_bag.hpp"
+
+class set {
+private:
+    searchable_bag* bag;
+
+public:
+    set(searchable_bag* b) : bag(b) {}
+
+    ~set() {
+        delete bag;
+    }
+
+    set(const set& other) : bag(NULL) {}
+
+    set& operator=(const set& other) {
+        if (this != &other) {
+            delete bag;
+            bag = NULL;
+        }
+        return *this;
+    }
+
+    void insert(int value) {
+        if (!bag->has(value))
+            bag->insert(value);
+    }
+
+    void insert(int* array, int size) {
+        for (int i = 0; i < size; i++)
+            insert(array[i]);
+    }
+
+    bool has(int value) const {
+        return bag->has(value);
+    }
+
+    void print() const {
+        bag->print();
+    }
+
+    void clear() {
+        bag->clear();
+    }
+};
+
+#endif`,
+},
+};
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const S = {
+  mode: 'type',
+  locked: false,
+  running: false,
+  startTime: null,
+  pauseOff: 0,
+  timerRaf: null,
+  splits: [],
+  correctLines: new Set(),
+  refLines: [],
+  currentSnippet: '',  // "BSQ / bsq.c → solve"
+  detectedBlocks: [],
+};
+
+// ─── TIMER ───────────────────────────────────────────────────────────────────
+function fmt(ms) {
+  const t = Math.floor(ms / 100);
+  return `${String(Math.floor(t / 600)).padStart(2,'0')}:${String(Math.floor(t/10)%60).padStart(2,'0')}.${t%10}`;
+}
+
+function elapsed() {
+  if (!S.startTime) return S.pauseOff;
+  if (S.running) return Date.now() - S.startTime;
+  return S.pauseOff;
+}
+
+function timerTick() {
+  document.getElementById('timer').textContent = fmt(elapsed());
+  if (S.running) S.timerRaf = requestAnimationFrame(timerTick);
+}
+
+function startTimer() {
+  if (S.running) return;
+  S.running = true;
+  S.startTime = Date.now() - S.pauseOff;
+  document.getElementById('timer').className = 'running';
+  S.timerRaf = requestAnimationFrame(timerTick);
+}
+
+function stopTimer() {
+  if (!S.running) return;
+  S.running = false;
+  S.pauseOff = Date.now() - S.startTime;
+  cancelAnimationFrame(S.timerRaf);
+  document.getElementById('timer').className = 'done';
+  timerTick();
+}
+
+function resetTimer() {
+  cancelAnimationFrame(S.timerRaf);
+  S.running = false; S.startTime = null; S.pauseOff = 0;
+  document.getElementById('timer').className = '';
+  document.getElementById('timer').textContent = '00:00.0';
+}
+
+// ─── LINE NUMBERS ─────────────────────────────────────────────────────────────
+function renderRefLnums(count) {
+  const el = document.getElementById('ref-lnums');
+  let h = '';
+  for (let i = 1; i <= Math.max(count, 1); i++)
+    h += `<div class="ln-row">${i}</div>`;
+  el.innerHTML = h;
+}
+
+function renderPracLnums(refLines, pracLines) {
+  const el = document.getElementById('prac-lnums');
+  const count = Math.max(refLines.length, pracLines.length, 1);
+  let h = '';
+  for (let i = 0; i < count; i++) {
+    const ref = refLines[i], prac = pracLines[i];
+    let cls = 'empty';
+    if (ref !== undefined) {
+      if (prac === undefined || prac === '') cls = 'empty';
+      else cls = (prac === ref) ? 'correct' : 'wrong';
+    } else {
+      cls = (prac && prac.trim()) ? 'extra' : 'empty';
+    }
+    h += `<div class="ln-row"><span class="ln-dot ${cls}"></span>${i + 1}</div>`;
+  }
+  el.innerHTML = h;
+}
+
+function syncLnScroll(which) {
+  const ta = document.getElementById(which === 'ref' ? 'ref-ta' : 'prac-ta');
+  const ln = document.getElementById(which === 'ref' ? 'ref-lnums' : 'prac-lnums');
+  ln.scrollTop = ta.scrollTop;
+}
+
+// ─── REFERENCE ───────────────────────────────────────────────────────────────
+function onRefChange() {
+  S.refLines = document.getElementById('ref-ta').value.split('\n');
+  renderRefLnums(S.refLines.length);
+  compare();
+}
+
+// ─── PRACTICE ────────────────────────────────────────────────────────────────
+function onPracChange() {
+  if (S.mode === 'type' && S.locked && !S.running) startTimer();
+  compare();
+}
+
+function handleKey(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta = e.target, s = ta.selectionStart, end = ta.selectionEnd;
+    ta.value = ta.value.slice(0, s) + '\t' + ta.value.slice(end);
+    ta.selectionStart = ta.selectionEnd = s + 1;
+    onPracChange();
+  }
+}
+
+// ─── COMPARE ─────────────────────────────────────────────────────────────────
+function compare() {
+  const ref = S.refLines;
+  const prac = document.getElementById('prac-ta').value.split('\n');
+  const total = ref.length;
+  let correct = 0;
+
+  for (let i = 0; i < total; i++) {
+    const ok = prac[i] === ref[i];
+    if (ok) {
+      correct++;
+      if (!S.correctLines.has(i) && S.running) {
+        addSplit(i, ref[i]);
+        S.correctLines.add(i);
+      }
+    } else {
+      S.correctLines.delete(i);
+    }
+  }
+
+  renderPracLnums(ref, prac);
+
+  const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+  document.getElementById('progress').textContent = `${correct} / ${total} Zeilen`;
+  const bar = document.getElementById('progress-bar');
+  bar.style.width = pct + '%';
+  bar.className = 'progress-bar-inner' + (correct === total && total > 0 ? ' complete' : '');
+
+  // check mode stats
+  document.getElementById('check-correct').textContent = correct;
+  document.getElementById('check-wrong').textContent = total - correct;
+  document.getElementById('check-pct').textContent = pct + '%';
+
+  if (S.mode === 'type' && S.running && correct === total && total > 0)
+    onComplete();
+}
+
+// ─── MODE ─────────────────────────────────────────────────────────────────────
+function setMode(mode) {
+  if (S.mode === mode) return;
+  if (S.locked) unlock();
+  resetTimer();
+  S.mode = mode;
+  document.getElementById('mode-type-btn').classList.toggle('active', mode === 'type');
+  document.getElementById('mode-check-btn').classList.toggle('active', mode === 'check');
+  document.body.classList.toggle('check-mode', mode === 'check');
+
+  if (mode === 'check') {
+    document.getElementById('ref-ta').readOnly = false;
+    document.getElementById('prac-title').textContent = 'Dein Code';
+    document.getElementById('ref-title').textContent = 'Referenz';
+    document.getElementById('prac-ta').placeholder = 'Deinen Code hier einfügen zum Vergleich…';
+  } else {
+    document.getElementById('prac-title').textContent = 'Übung';
+    document.getElementById('ref-title').textContent = 'Referenz';
+    document.getElementById('prac-ta').placeholder = 'Tippe hier deinen Code…';
+  }
+}
+
+// ─── LOCK ─────────────────────────────────────────────────────────────────────
+function toggleLock() { S.locked ? unlock() : lock(); }
+
+function lock() {
+  const ref = document.getElementById('ref-ta').value.trim();
+  if (!ref) { alert('Bitte erst Referenzcode einfügen oder Snippet laden!'); return; }
+  S.locked = true;
+  S.refLines = ref.split('\n');
+  document.getElementById('ref-panel').classList.add('ref-locked');
+  document.getElementById('lock-btn').textContent = 'Unlock';
+  document.getElementById('lock-btn').className = 'btn unlock';
+  document.getElementById('lock-icon').textContent = '🔒';
+  document.getElementById('ref-ta').readOnly = true;
+  resetTimer();
+  S.splits = []; S.correctLines = new Set();
+  renderSplits();
+  renderRefLnums(S.refLines.length);
+  compare();
+  document.getElementById('prac-ta').focus();
+}
+
+function unlock() {
+  S.locked = false;
+  stopTimer();
+  document.getElementById('ref-panel').classList.remove('ref-locked', 'ref-peeking');
+  document.getElementById('lock-btn').textContent = 'Lock & Start';
+  document.getElementById('lock-btn').className = 'btn primary';
+  document.getElementById('lock-icon').textContent = '';
+  document.getElementById('ref-ta').readOnly = false;
+}
+
+function resetPractice() {
+  document.getElementById('prac-ta').value = '';
+  resetTimer();
+  S.splits = []; S.correctLines = new Set();
+  renderSplits(); compare();
+  if (S.locked) document.getElementById('prac-ta').focus();
+}
+
+function clearAll() {
+  if (!confirm('Alles löschen?')) return;
+  if (S.locked) unlock();
+  document.getElementById('ref-ta').value = '';
+  document.getElementById('prac-ta').value = '';
+  S.refLines = [];
+  resetTimer(); S.splits = []; S.correctLines = new Set();
+  renderSplits(); renderRefLnums(1); renderPracLnums([], []);
+  document.getElementById('progress').textContent = '0 / 0 Zeilen';
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('block-info').textContent = '';
+  S.currentSnippet = '';
+}
+
+// ─── PEEK ─────────────────────────────────────────────────────────────────────
+function peekStart() { document.getElementById('ref-panel').classList.add('ref-peeking'); }
+function peekEnd()   { document.getElementById('ref-panel').classList.remove('ref-peeking'); }
+
+// ─── SPLITS ───────────────────────────────────────────────────────────────────
+function addSplit(lineIdx, text) {
+  const now = elapsed();
+  const prev = S.splits.length > 0 ? S.splits[S.splits.length - 1].time : 0;
+  S.splits.push({ line: lineIdx + 1, time: now, delta: now - prev, text: text.trim().slice(0, 25) });
+  renderSplits();
+}
+
+function renderSplits() {
+  const el = document.getElementById('splits-list');
+  if (!S.splits.length) { el.innerHTML = '<div class="empty-hint">Noch keine Splits</div>'; return; }
+  el.innerHTML = S.splits.map(sp =>
+    `<div class="split-item">
+      <span class="split-line">L${sp.line}</span>
+      <span class="split-time">${fmt(sp.time)}</span>
+      <span class="split-delta">+${fmt(sp.delta)}</span>
+    </div>`
+  ).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function clearSplits() {
+  S.splits = []; renderSplits();
+}
+
+// ─── COMPLETION ───────────────────────────────────────────────────────────────
+function onComplete() {
+  stopTimer();
+  const ms = elapsed();
+  const hist = loadHistory();
+  hist.unshift({
+    date: new Date().toISOString(),
+    time: ms,
+    lines: S.refLines.length,
+    splits: S.splits.length,
+    snippet: S.currentSnippet,
+  });
+  saveHistory(hist.slice(0, 100));
+  renderHistory();
+  document.getElementById('final-time').textContent = fmt(ms);
+  document.getElementById('final-snippet').textContent = S.currentSnippet || '';
+  document.getElementById('final-meta').textContent = `${S.refLines.length} Zeilen · ${S.splits.length} Splits`;
+  document.getElementById('completion-banner').classList.add('show');
+}
+function closeCompletion() { document.getElementById('completion-banner').classList.remove('show'); }
+
+// ─── HISTORY ─────────────────────────────────────────────────────────────────
+function loadHistory() { try { return JSON.parse(localStorage.getItem('ct_hist2') || '[]'); } catch { return []; } }
+function saveHistory(h) { localStorage.setItem('ct_hist2', JSON.stringify(h)); }
+function clearHistory() { if (!confirm('Verlauf löschen?')) return; saveHistory([]); renderHistory(); }
+
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  const hist = loadHistory();
+  if (!hist.length) { el.innerHTML = '<div class="empty-hint">Noch kein Verlauf</div>'; return; }
+  el.innerHTML = hist.map(h => {
+    const d = new Date(h.date);
+    const ds = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
+             + ' ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    return `<div class="history-item">
+      <div class="h-time">${fmt(h.time)}</div>
+      <div class="h-snippet">${h.snippet || '—'}</div>
+      <div class="h-meta">${h.lines} Z · ${ds}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── BLOCK DETECTION ─────────────────────────────────────────────────────────
+function detectBlocks(text) {
+  const lines = text.split('\n');
+  const all = [{ name: 'Gesamt', start: 0, end: lines.length - 1 }];
+  const skip = new Set(['if','while','for','switch','return','else','do','case','typedef','enum','class','struct','namespace','new','delete']);
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    // Must start at column 0, not be a preprocessor/comment/blank, contain '('
+    if (!line || /^\s/.test(line) || line[0] === '#' || line.startsWith('//') || line.startsWith('/*') || line.startsWith('*') || !line.includes('(')) {
+      i++; continue;
+    }
+    // Extract name: last word before '(' (handles 'operator+', 'foo::bar', etc.)
+    const m = line.match(/(\w+(?:::\w+)?|operator\S+)\s*\(/);
+    if (!m || skip.has(m[1])) { i++; continue; }
+    const name = m[1];
+
+    // Find matching braces
+    let depth = 0, started = false, j = i, found = false;
+    while (j < lines.length && j - i < 400) {
+      for (const ch of lines[j]) {
+        if (ch === '{') { depth++; started = true; }
+        else if (ch === '}' && started) depth--;
+      }
+      if (started && depth === 0) {
+        all.push({ name, start: i, end: j });
+        i = j + 1; found = true; break;
+      }
+      j++;
+    }
+    if (!found) i++;
+  }
+  return all;
+}
+
+// ─── SNIPPET SELECTOR ─────────────────────────────────────────────────────────
+function onGroupChange() {
+  populateFileSel();
+}
+
+function onFileChange() {
+  populateBlockSel();
+}
+
+function populateGroupSel() {
+  const sel = document.getElementById('group-sel');
+  sel.innerHTML = Object.keys(SNIPPETS).map(g => `<option value="${g}">${g}</option>`).join('');
+  populateFileSel();
+}
+
+function populateFileSel() {
+  const group = document.getElementById('group-sel').value;
+  const files = Object.keys(SNIPPETS[group] || {});
+  const sel = document.getElementById('file-sel');
+  sel.innerHTML = files.map(f => `<option value="${f}">${f}</option>`).join('');
+  populateBlockSel();
+}
+
+function populateBlockSel() {
+  const group = document.getElementById('group-sel').value;
+  const file = document.getElementById('file-sel').value;
+  const text = SNIPPETS[group]?.[file] ?? '';
+  S.detectedBlocks = detectBlocks(text);
+  const sel = document.getElementById('block-sel');
+  sel.innerHTML = S.detectedBlocks.map((b, i) =>
+    `<option value="${i}">${b.name}${b.name !== 'Gesamt' ? ' (L'+(b.start+1)+'-'+(b.end+1)+')' : ''}</option>`
+  ).join('');
+}
+
+function loadSnippet() {
+  const group = document.getElementById('group-sel').value;
+  const file = document.getElementById('file-sel').value;
+  const blockIdx = parseInt(document.getElementById('block-sel').value);
+  const text = SNIPPETS[group]?.[file] ?? '';
+  if (!text) return;
+  const block = S.detectedBlocks[blockIdx];
+  let snippet;
+  if (!block || block.name === 'Gesamt') {
+    snippet = text;
+    S.currentSnippet = `${group} / ${file}`;
+  } else {
+    snippet = text.split('\n').slice(block.start, block.end + 1).join('\n');
+    S.currentSnippet = `${group} / ${file} → ${block.name}`;
+  }
+  document.getElementById('block-info').textContent = S.currentSnippet;
+
+  // If locked, unlock first
+  if (S.locked) unlock();
+  document.getElementById('ref-ta').value = snippet;
+  onRefChange();
+  document.getElementById('ref-ta').scrollTop = 0;
+}
+
+// ─── RESIZABLE DIVIDER ────────────────────────────────────────────────────────
+(function() {
+  const div = document.getElementById('divider');
+  const lp  = document.getElementById('ref-panel');
+  const rp  = document.getElementById('prac-panel');
+  let dragging = false, startX = 0, startL = 0, startR = 0;
+
+  div.addEventListener('mousedown', e => {
+    dragging = true; startX = e.clientX;
+    startL = lp.offsetWidth; startR = rp.offsetWidth;
+    div.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    lp.style.flex = 'none'; rp.style.flex = 'none';
+    lp.style.width = Math.max(150, startL + dx) + 'px';
+    rp.style.width = Math.max(150, startR - dx) + 'px';
+  });
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    div.classList.remove('dragging');
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+  });
+})();
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+populateGroupSel();
+renderRefLnums(1);
+renderPracLnums([], []);
+renderHistory();
+</script>
+</body>
+</html>

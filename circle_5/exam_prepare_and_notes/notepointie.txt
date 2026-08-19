@@ -1,0 +1,132 @@
+Da el ein Pointer ist (t_elements *el), gilt die Regel:
+
+Syntax	Wann?	Beispiel
+el->member	Pointer → member lesen/schreiben	el->empty == 'x'
+el.member	FALSCH — el ist kein Wert, sondern Pointer	❌ compiler error
+&el->member	Adresse eines Members (z.B. für fscanf)	&el->n_lines
+(*el).member	Gleichwertig zu ->, nur hässlicher	selten nötig
+Faustregel:
+
+Variable ist t_elements *el (Pointer) → immer ->
+Variable ist t_elements el (Wert, kein Stern) → immer .
+Dein Fehler war genau das — el.empty statt el->empty:
+
+
+// FALSCH:
+el->full == el.empty
+
+// RICHTIG:
+el->full == el->empty
+Für fscanf brauchst du &el->n_lines weil:
+
+el->n_lines = der int-Wert selbst
+&el->n_lines = Adresse dieses int-Werts (was fscanf braucht zum Reinschreiben)
+Der -> Operator ist quasi Kurzform für (*el). — er dereferenziert den Pointer und greift dann auf das Member zu, alles in einem Schritt.
+
+
+-----------------------------------------------------------------
+
+
+mm ideen? bin uberfragt jetzt gehen beide nicht...
+Let me read the current state of bsq.c and then try to compile and run it properly.
+
+Lass mich die aktuelle Version lesen und dann direkt testen.
+
+Read bsq.c
+Bash Compile and run bsq with test file
+IN
+cd /home/chuhlig/Desktop/42_examshell/rendu3/bsq && cc bsq.c -o bsq && ./bsq ../../test/bsq/test1.txt 2>&1; echo "exit=$?"
+
+OUT
+exit=0
+Still no output. This is really strange. The code looks correct to me. Let me add a temporary debug fprintf to find where the issue is.
+
+Let me think about this differently. The code compiles cleanly and returns 0, but no output. The only way this happens is if map.height == 0 when we reach the print loop.
+
+But how? map->height = el->n_lines = 9 at the start of load_map. And load_map returns 0 (success). So map.height should be 9 when we print.
+
+Unless... load_map is modifying map->height as part of error handling? But if load_map returned 0, no error path was taken.
+
+Wait, I'm overcomplicating this. After load_map succeeds with map.height set to 9, solve() only reads from the map and modifies the grid—it never touches height. So when we hit the print loop, map.height should still be 9 and the grid should contain valid strings. The printf should definitely output 9 lines. Let me add a debug fprintf to stderr right before the print loop to check what map.height actually is at that point.
+
+Actually, I'll just add a temporary debug statement directly in the code, recompile, and test it.
+
+Code sieht korrekt aus. Ich muss sehen was in map.height steht kurz vor dem Print:
+
+Edit bsq.c
+Added 1 line
+Bash Run with debug to check map.height value
+IN
+cc bsq.c -o bsq && ./bsq ../../test/bsq/test1.txt; echo "exit=$?"
+
+OUT
+exit=0
+The fprintf(stderr, ...) isn't even showing! That means execute_bsq is not even being called, OR load_map is returning -1.
+
+Wait - the stderr output should appear even if stdout is empty. Unless... there's something fundamentally wrong with how I'm running this.
+
+Wait, I see - the user denied the cc bsq.c -o bsq && ./bsq ../../test/bsq/test1.txt 2>&1 command earlier. But now I'm running without 2>&1. Let me add that.
+
+Actually wait - I ran ./bsq ../../test/bsq/test1.txt; echo "exit=$?" without 2>&1.
+
+The stderr should still be visible in the terminal, but it's not appearing. Maybe load_elements is failing and causing execute_bsq to return -1 before it even gets to that fprintf call? Actually, wait - I need to check if I actually recompiled the binary after editing the file, since the executable was built in a different directory.
+
+I did run the recompile command, so that should be fine. But the debug output still isn't showing, which means either execute_bsq isn't being called at all, load_elements is returning -1, or load_map is failing. Let me add some debug output right at the start of execute_bsq to see if we're even entering that function.
+
+Der Debug-Print erscheint nicht mal — execute_bsq wird nie fertig. Lass mich früher debuggen:
+
+Edit bsq.c
+Added 8 lines
+Bash Run with detailed debug output
+IN
+cc bsq.c -o bsq && ./bsq ../../test/bsq/test1.txt
+
+OUT
+DEBUG: execute_bsq called
+DEBUG: load_elements ok, n_lines=9
+DEBUG: load_map failed
+load_map is failing! Now I need to find out why. Let me add debug prints inside load_map to see which check fails.
+
+The issue must be somewhere in the line reading loop. Let me add fprintf(stderr) calls at each return -1 point in load_map.
+
+load_map schlägt fehl. Jetzt finde ich die genaue Zeile:
+
+Edit bsq.c
+Added 4 lines
+Bash Run to find exact load_map failure point
+IN
+cc bsq.c -o bsq && ./bsq ../../test/bsq/test1.txt
+
+OUT
+DEBUG: execute_bsq called
+DEBUG: load_elements ok, n_lines=9
+DEBUG load_map: width mismatch at i=8 len=26 width=27
+DEBUG: load_map failed
+The issue is that line 8 (the last line, 0-indexed) has length 26 but all other lines have width 27. This is a problem with the test file - the last line doesn't have a trailing newline or is shorter.
+
+Let me check the test file:
+
+
+9 . o x
+...........................   (27 dots)
+....o......................   (27 chars)
+............o..............  (27 chars)
+...........................  (27 chars)
+....o......................  (27 chars)
+...............o...........  (27 chars)
+
+
+...........................  (27 chars)
+......o..............o.....  (27 chars)
+..o.......o...............   (26 chars)
+Counting the last line character by character, I'm getting 26 characters instead of 27. The issue is likely that the last line in the test file is missing a trailing newline, so when getline reads it, it doesn't include the \n character. Since the code strips the newline after reading, lines with \n end up as 27 characters after stripping, but the last line without \n stays at 26 characters.
+
+The test file itself has inconsistent width — the last line is actually one character shorter than the others. I should either fix the test file to have consistent dimensions or handle variable-width grids in the code.
+
+Gefunden. Die letzte Zeile in der Testdatei hat 26 Zeichen, alle anderen 27. Das ist ein Bug in der Testdatei.
+
+Bash Show line lengths in test file
+IN
+awk '{print NR": "length" chars: "$0}' ../../test/bsq/test1.txt
+
+

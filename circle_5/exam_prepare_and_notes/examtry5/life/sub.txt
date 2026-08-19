@@ -1,0 +1,119 @@
+Assignment name : life
+Expected files : *.c *.h
+Allowed functions: atoi, read, putchar, malloc, calloc, realloc, free
+--------------------------------------------------------------------------------
+You must write a program that will simulate a game of life.
+The prototype of this program is the following:
+./life width height iterations
+Width and height are the dimensions of the board and iterations is the number of
+iterations of the game of life.
+the initial configuration of the board will be drawn by a sequence of commands
+in the standard input.
+Imagine a pen starting in the top left corner of the board.
+Each command is one of these characters:
+
+w a s d -> move the pen up, left, bottom, and right.
+x -> lift or lower the pen in order to start or stop drawing.
+
+Once end of file is reached, your program must simulate a game of life on this
+board and print the result in stdout (each cell alive will be represented by
+the character 'O' and each dead cell will be represented by a space)
+each cell outside of the array will be considered dead
+Example:
+$> echo 'sdxddssaaww' | ./a.out 5 5 0 | cat -e
+$
+OOO $
+O O $
+OOO $
+$
+$> echo 'sdxssdswdxddddsxaadwxwdxwaa' | ./a.out 10 6 0 | cat -e
+$
+O OOO $
+O O $
+OOO O $
+O OOO $
+$
+$> echo 'dxss' | ./a.out 3 3 0 | cat -e
+O $
+O $
+O $
+$> echo 'dxss' | ./a.out 3 3 1 | cat -e
+$
+OOO$
+$
+$> echo 'dxss' | ./a.out 3 3 2 | cat -e
+O $
+O $
+O $
+
+concept wise we work with 3 input arg + bin so if ac != 4 out
+next point bc of the functions Allowed list i know i can use atoi the scrappe this info
+
+what also could be handy is a struct that hold the infos or predeclare also ok bc not particular needed in this characters
+
+ echo 'sdxddssaaww' | ./a.out 5 5 0 | cat -e to this how the this part get parsed and executed?
+
+ game of life rules:
+
+ if lifing cell is surounded by less then 2 neibourghs it dies                        //underpopulation
+
+ if a lifing cell is surounded by more 2 or 3?? neibourghs its lives on circle longer //survive
+
+ if a living cell has more then 3 living neibourghs it dies                           //overpopulation
+
+ and if a dead cell has exact 3 living neighboughrs i comes back to alive             //repreduction
+
+ // Alle 8 Nachbarn checken:
+int count = 0;
+count += board[y-1][x-1];  // NW (diagonal)
+count += board[y-1][x];    // N
+count += board[y-1][x+1];  // NE (diagonal)
+count += board[y][x-1];    // W
+count += board[y][x+1];    // E
+count += board[y+1][x-1];  // SW (diagonal)
+count += board[y+1][x];    // S
+count += board[y+1][x+1];  // SE (diagonal)
+
+Alle 8 Nachbarn zählen:
+Diagonal zählt auch! Eine Zelle hat maximal 8 Nachbarn:
+
+Wo X = die Zelle, die wir betrachten
+
+N = oben (North)
+S = unten (South)
+W = links (West)
+E = rechts (East)
+NE = oben rechts (diagonal)
+NW = oben links (diagonal)
+SE = unten rechts (diagonal)
+SW = unten links (diagonal)
+
+NW  N  NE
+ W  X  E
+SW  S  SE
+
+some output esg.
+3-B-3% echo 'sdxddssaaww' | ./a.out 5 5 0 | cat -e
+     $
+ 000 $
+ 0 0 $
+ 000 $
+     $
+3-B-3% echo 'sdxddssaaww' | ./a.out 5 5 1 | cat -e
+  0  $
+ 0 0 $
+0   0$
+ 0 0 $
+  0  $
+3-B-3% echo 'sdxddssaaww' | ./a.out 5 5 2 | cat -e
+  0  $
+ 000 $
+00 00$
+ 000 $
+  0  $
+3-B-3% echo 'sdxddssaaww' | ./a.out 5 5 3 | cat -e
+ 000 $
+0   0$
+0   0$
+0   0$
+ 000 $

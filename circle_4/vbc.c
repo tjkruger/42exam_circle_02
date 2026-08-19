@@ -32,7 +32,7 @@ int parse_factor(void)
 	return(0);	
 }
 
-int parse_term()
+int parse_term(void)
 {
 	int val;
 
